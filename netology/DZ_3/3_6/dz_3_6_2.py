@@ -1,4 +1,3 @@
-from sqlalchemy import or_
 from sqlalchemy.orm import sessionmaker, joinedload
 from engine import engine
 from dz_3_6_1 import Publisher, Book, Shop, Stock, Sale
@@ -7,7 +6,7 @@ Session = sessionmaker(bind=engine)
 db = Session()
 
 def get_shops(name_or_id):
-    items = (
+    query = (
         db.query(
             Book.title,
             Shop.name,
@@ -17,25 +16,22 @@ def get_shops(name_or_id):
         .join(Stock)
         .join(Shop)
         .join(Sale)
+        .join(Book.publisher)
         .options(joinedload(Stock.book))
         .options(joinedload(Book.publisher))
         .filter(
             or_(
-                Book.id_publisher == name_or_id,
+                Book.publisher_id == name_or_id,
                 Publisher.name == name_or_id
             )
         )
-        .all()
     )
+    items = query.all()
     if not items:
         print("Не найдено издательство с таким именем или идентификатором")
         return []
 
-    result = []
-    for title, shop_name, price, date_sale in items:
-        result.append((title, shop_name, price, date_sale.strftime('%d-%m-%Y')))
-
-    return result
+    return [(title, shop_name, price, date_sale.strftime('%d-%m-%Y')) for title, shop_name, price, date_sale in items]
 
 if __name__ == '__main__':
     name_or_id = input("Введите имя или идентификатор издателя: ")
