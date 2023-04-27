@@ -49,21 +49,37 @@ if __name__ == "__main__":
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
 
-    publisher_name = input("Введите имя или идентификатор издателя: ")
+    publisher_input = input("Введите имя или идентификатор издателя: ")
 
-    sales = (
-        Session()
-        .query(Sale)
-        .join(Stock)
-        .join(Book)
-        .join(Publisher)
-        .filter(Publisher.name == publisher_name)
-        .order_by(Sale.date_sale)
-        .all()
-    )
-
-    for sale in sales:
-        print(
-            f"{sale.stock.book.title} | {sale.stock.shop.name} | {sale.price} | {sale.date_sale}"
+    try:
+        publisher_id = int(publisher_input)
+        publisher = (
+            Session().query(Publisher).filter(Publisher.id == publisher_id).first()
         )
+    except ValueError:
+        publisher = (
+            Session().query(Publisher).filter(Publisher.name == publisher_input).first()
+        )
+
+    if publisher is None:
+        print("Издатель не найден")
+    else:
+        sales = (
+            Session()
+            .query(Sale)
+            .join(Stock)
+            .join(Book)
+            .join(Publisher)
+            .filter(Publisher.id == publisher.id)
+            .order_by(Sale.date_sale)
+            .all()
+        )
+
+        for sale in sales:
+            print(
+                f"{sale.stock.book.title} | {sale.stock.shop.name} | {sale.price} | {sale.date_sale}"
+            )
+
+        print(f"Найдено {len(sales)} продаж для издателя {publisher.name}")
+
 
