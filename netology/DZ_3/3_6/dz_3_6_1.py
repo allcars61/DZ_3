@@ -20,12 +20,19 @@ class Book(Base):
     publisher = relationship(Publisher, backref="books")
 
 
+class Shop(Base):
+    __tablename__ = "shop"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+
+
 class Stock(Base):
     __tablename__ = "stock"
     id = Column(Integer, primary_key=True)
     book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
     book = relationship(Book, backref="stock")
     shop_id = Column(Integer, ForeignKey("shop.id"), nullable=False)
+    shop = relationship(Shop, backref="stock")
     count = Column(Integer, nullable=False)
 
 
@@ -37,12 +44,6 @@ class Sale(Base):
     stock_id = Column(Integer, ForeignKey("stock.id"), nullable=False)
     stock = relationship(Stock, backref="sale")
     count = Column(Integer, nullable=False)
-
-
-class Shop(Base):
-    __tablename__ = "shop"
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
 
 
 if __name__ == "__main__":
@@ -68,6 +69,7 @@ if __name__ == "__main__":
             Session()
             .query(Sale)
             .join(Stock)
+            .join(Stock.shop)  # обращаемся к магазину через связь stock.shop
             .join(Book)
             .join(Publisher)
             .filter(Publisher.id == publisher.id)
@@ -81,5 +83,3 @@ if __name__ == "__main__":
             )
 
         print(f"Найдено {len(sales)} продаж для издателя {publisher.name}")
-
-
